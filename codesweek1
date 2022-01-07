@@ -47,4 +47,49 @@ WITH cte_order_rank AS
 )
   SELECT * FROM  cte_order_rank
   WHERE rank1 =1;
-  -- 6. Which item was purchased first by the customer after they became a member?
+ -- Before answering question 6-10, I created a membership_validation table to validate only those customers joining in the membership program:
+
+ DROP TABLE IF EXISTS membership_validation;
+CREATE TEMP TABLE membership_validation AS
+SELECT
+   sales.customer_id,
+   sales.order_date,
+   menu.product_name,
+   menu.price,
+   members.join_date,
+   CASE WHEN sales.order_date >= members.join_date
+     THEN 'X'
+     ELSE ''
+     END AS membership
+FROM dannys_diner.sales
+ INNER JOIN dannys_diner.members 
+   ON sales.customer_id = members.customer_id
+ LEFT JOIN dannys_diner.menu
+   ON sales.product_id = menu.product_id 
+  WHERE join_date IS NOT NULL
+  ORDER BY 
+    customer_id,
+    order_date;
+     SELECT * FROM membership_validation;
+     
+ -- 6. Which item was purchased first by the customer after they became a member?
+ 
+
+-- bu customer_idye göre değil genele bakarak ilk purcahse i gösterir
+SELECT mv.order_date, mv.product_name , mv.customer_id
+FROM membership_validation AS mv
+WHERE  mv.membership = 'X'
+ORDER BY mv.order_date
+limit 1;
+
+
+WITH cte_m AS (
+  SELECT 
+  mv.customer_id,  mv.order_date, mv.product_name, RANK() OVER( PARTITION BY  customer_id ORDER BY order_date ) AS rank2
+FROM membership_validation AS mv
+              WHERE membership = 'X' 
+)
+SELECT * FROM cte_m
+WHERE rank2= 1;
+
+
