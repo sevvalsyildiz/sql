@@ -92,4 +92,49 @@ FROM membership_validation AS mv
 SELECT * FROM cte_m
 WHERE rank2= 1;
 
+-- 7. Which item was purchased just before the customer became a member?
 
+
+WITH cte_last_before_mem AS (
+  SELECT 
+    customer_id,
+    product_name,
+  	order_date,
+    RANK() OVER(
+    PARTITION BY customer_id
+    ORDER BY order_date DESC) AS purchase_order
+  FROM membership_validation
+  WHERE membership = ''
+)
+SELECT * FROM cte_last_before_mem
+--since we used the ORDER BY DESC in the query above, the order 1 would mean the last date before the customer join in the membership
+WHERE purchase_order = 1;
+
+-- 8. What is the total items and amount spent for each member before they became a member?
+WITH cte_total AS (
+  SELECT 
+    customer_id,
+  product_name,
+  price
+  FROM membership_validation
+  WHERE membership = ''
+)
+
+SELECT 
+customer_id,
+SUM(price) AS total_price,
+COUNT(*) AS total-items
+FROM cte_total
+GROUP BY customer_id
+ORDER BY customer_id;
+
+-- 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
+SELECT 
+customer_id , 
+SUM (
+  CASE WHEN product_name = 'sushi' THEN ( 20*price )
+  ELSE (10*price)
+  END )  AS total_point 
+  FROM membership_validation                                  
+  GROUP BY customer_id
+  ORDER BY customer_id;
