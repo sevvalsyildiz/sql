@@ -1,0 +1,74 @@
+-- müşteri hesap açarken planı seçebilir
+   başlangıç 7 gün ücretsiz deneme--> otomatik olarak pro'ya dönüşür.
+   trial süresince müşteri planı değiştirebilir.
+   herhangi bi change yaparsa o customer_id'ye yeni bi plan_id eklenir ve o date start_date'e girlir.
+
+--1
+SELECT COUNT (DISTINCT customer_id )FROM foodie_fi.subscriptions;
+--2
+SELECT EXTRACT(month from start_date) AS months , COUNT(*)
+FROM foodie_fi.subscriptions
+JOIN foodie_fi.plans 
+ON plans.plan_id = subscriptions.plan_id
+WHERE plan_name= 'trial'
+GROUP BY months
+ORDER BY months;
+
+--3 What plan start_date values occur after the year 2020 for our dataset? Show the breakdown by count of events for each plan_name
+
+SELECT  plan_id , COUNT(*)
+FROM foodie_fi.subscriptions
+WHERE start_date > '  2020-01-01 '
+GROUP BY  plan_id
+ORDER BY plan_id ;
+
+-- önce doğru tarihleri aldığından emin olmak için start_datelere de bak:
+SELECT  plan_id ,,start_date COUNT(*)
+FROM foodie_fi.subscriptions
+WHERE start_date > '  2020-01-01 '
+GROUP BY  plan_id,start_date
+ORDER BY plan_id,start_date ;
+
+
+--4 What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
+SELECT plan_id , COUNT(*) AS customer_count
+FROM foodie_fi.subscriptions
+
+--5
+
+DROP TABLE IF EXISTS next_plan_cte ;
+CREATE TEMP TABLE next_plan_cte AS (
+ SELECT *, 
+  LEAD(plan_id,1) OVER( PARTITION BY customer_id ORDER BY start_date)  AS next_plan
+FROM foodie_fi.subscriptions ) ;
+  
+WITH direct_churner_cte AS (
+  SELECT COUNT(DISTINCT customer_id) AS direct_churner
+  FROM next_plan_cte
+  WHERE plan_id = 0 AND next_plan = 4)
+  
+  SELECT direct_churner FROM  direct_churner_cte;
+
+--6
+
+What is the number and percentage of customer plans after their initial free trial?
+DROP TABLE IF EXISTS current_plan_count;
+CREATE TEMP TABLE current_plan_count AS (
+    SELECT plan_id, COUNT(DISTINCT customer_id) AS num
+    FROM foodie_fi.subscriptions
+    GROUP BY plan_id
+);
+
+WITH conversions AS (
+    SELECT next_plan, COUNT(*) AS total_conversions
+    FROM next_plan_cte
+    WHERE next_plan IS NOT NULL AND plan_id = 0
+    GROUP BY next_plan
+    ORDER BY next_plan
+)
+
+SELECT current_plan_count.plan_id, total_conversions, num,
+        ROUND(CAST(total_conversions::FLOAT / num::FLOAT * 100 AS NUMERIC), 2) AS percent_directly_converted
+FROM current_plan_count JOIN conversions
+    ON current_plan_count.plan_id = conversions.next_plan;
+ 
