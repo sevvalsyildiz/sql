@@ -71,4 +71,50 @@ SELECT current_plan_count.plan_id, total_conversions, num,
         ROUND(CAST(total_conversions::FLOAT / num::FLOAT * 100 AS NUMERIC), 2) AS percent_directly_converted
 FROM current_plan_count JOIN conversions
     ON current_plan_count.plan_id = conversions.next_plan;
- 
+    
+    
+    
+    
+ --9 How many days on average does it take for a customer to an annual plan from the day they join Foodie-Fi?
+
+WITH join_date AS( 
+  SELECT customer_id, start_date
+  FROM foodie_fi.subscriptions
+  WHERE plan_id = 0),
+  
+upgrade_date AS (
+  SELECT customer_id , start_date AS upgrade_date
+  FROM foodie_fi.subscriptions
+  WHERE plan_id = 3)
+  
+  
+  SELECT ROUND ( AVG( upgrade_date - start_date), 2) AS avg_days_to_upgrade
+  FROM join_date JOIN upgrade_date ON join_date.customer_id = upgrade_date.customer_id;
+  
+  --10
+  bins AS (
+    SELECT* ,WIDTH_BUCKET(upgrade_date - start_date, 0, 360, 12) AS avg_days_to_upgrade
+    FROM join_date JOIN upgrade_date
+        ON join_date.customer_id = upgrade_date.customer_id
+)
+
+SELECT ((avg_days_to_upgrade )*30 || '-' || (avg_days_to_upgrade)*30) AS "30-day-range", COUNT(*)
+FROM bins
+GROUP BY avg_days_to_upgrade
+ORDER BY avg_days_to_upgrade;
+
+ --11
+ DROP TABLE IF EXISTS next_plan_cte;
+CREATE TEMP TABLE next_plan_cte AS(
+    SELECT *, EXTRACT (years from start_date) AS year ,
+        LEAD(plan_id, 1) 
+        OVER(PARTITION BY customer_id ORDER BY start_date) as next_plan
+    FROM foodie_fi.subscriptions
+);
+
+SELECT COUNT( DISTINCT customer_id) AS downgraded
+FROM next_plan_cte
+WHERE next_plan= 1 AND plan_id = 2 AND  year = 2020
+group by customer_id,plan_id, next_plan;
+
+
