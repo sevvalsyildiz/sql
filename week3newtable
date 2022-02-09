@@ -1,0 +1,44 @@
+-- ALTER TABLE m2
+ADD payment_id INTEGER ;
+UPDATE m2 SET payment_id = 1;
+SELECT * FROM m2
+DROP TABLE IF EXISTS m1;
+CREATE TEMP TABLE m1 AS ( 
+SELECT customer_id, ('2020-12-30' - start_date) AS payment_date , price AS amount
+FROM  foodie_fi.plans  
+JOIN foodie_fi.subscriptions 
+ON plans.plan_id= subscriptions.plan_id
+WHERE subscriptions.plan_id =1 AND subscriptions.plan_id = 2 );
+DROP TABLE IF EXISTS next_plan_cte;
+CREATE TEMP TABLE next_plan_cte AS(
+    SELECT *, 
+        LEAD(plan_id, 1) 
+        OVER(PARTITION BY customer_id ORDER BY start_date) as next_plan
+    FROM foodie_fi.subscriptions
+);
+select* from next_plan_cte;
+
+
+
+
+DROP TABLE IF EXISTS m2;
+CREATE TEMP TABLE m2 AS (
+SELECT customer_id, subscriptions.plan_id, start_date AS payment_date , price AS amount
+FROM  foodie_fi.plans  
+JOIN foodie_fi.subscriptions 
+ON plans.plan_id= subscriptions.plan_id
+WHERE subscriptions.plan_id =3)
+;
+
+
+ALTER TABLE m2
+ADD payment_id INTEGER ;
+UPDATE m2 SET payment_id = 1;
+SELECT * FROM m2
+DROP TABLE IF EXISTS m1;
+CREATE TEMP TABLE m1 AS ( 
+SELECT customer_id, ('2020-12-30' - start_date) AS payment_date , price AS amount
+FROM  foodie_fi.plans  
+JOIN foodie_fi.subscriptions 
+ON plans.plan_id= subscriptions.plan_id
+WHERE subscriptions.plan_id =1 AND subscriptions.plan_id = 2 );
