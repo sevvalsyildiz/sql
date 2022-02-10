@@ -1,7 +1,19 @@
--- ALTER TABLE m2
-ADD payment_id INTEGER ;
-UPDATE m2 SET payment_id = 1;
-SELECT * FROM m2
+DROP TABLE IF EXISTS next_plan_cte;
+CREATE TEMP TABLE next_plan_cte AS(
+    SELECT *, 
+        LEAD(plan_id, 1) 
+        OVER(PARTITION BY customer_id ORDER BY start_date) as next_plan
+    FROM foodie_fi.subscriptions
+); 
+
+
+WITH next_date_cte AS (
+    SELECT *,
+            LEAD (start_date, 1) OVER (PARTITION BY customer_id ORDER BY start_date) AS next_date
+    FROM foodie_fi.subscriptions
+) 
+
+
 DROP TABLE IF EXISTS m1;
 CREATE TEMP TABLE m1 AS ( 
 SELECT customer_id, ('2020-12-30' - start_date) AS payment_date , price AS amount
@@ -29,12 +41,14 @@ JOIN foodie_fi.subscriptions
 ON plans.plan_id= subscriptions.plan_id
 WHERE subscriptions.plan_id =3)
 ;
-
-
 ALTER TABLE m2
 ADD payment_id INTEGER ;
 UPDATE m2 SET payment_id = 1;
 SELECT * FROM m2
+
+
+
+
 DROP TABLE IF EXISTS m1;
 CREATE TEMP TABLE m1 AS ( 
 SELECT customer_id, ('2020-12-30' - start_date) AS payment_date , price AS amount
@@ -42,3 +56,96 @@ FROM  foodie_fi.plans
 JOIN foodie_fi.subscriptions 
 ON plans.plan_id= subscriptions.plan_id
 WHERE subscriptions.plan_id =1 AND subscriptions.plan_id = 2 );
+
+
+
+
+
+
+
+
+select customer_id, subscriptions.plan_id , plan_name, start_date AS payment_date, price AS amount 
+from foodie_fi.subscriptions join foodie_fi.plans on subscriptions.plan_id = plans.plan_id
+where  subscriptions.plan_id != 0 AND extract(year from start_date) = '2020'
+group by customer_id,subscriptions.plan_id,plan_name,start_date, price order by customer_id
+
+;
+
+
+
+
+create  procedure payment(
+  customer_id INTEGER) language plpgsql    
+as $$  
+
+declare customer_id = 16
+
+begin
+  
+select customer_id, subscriptions.plan_id , plan_name, start_date AS payment_date, price AS amount 
+from foodie_fi.subscriptions join foodie_fi.plans on subscriptions.plan_id = plans.plan_id
+where  subscriptions.plan_id != 0 AND extract(year from start_date) = '2020' 
+group by customer_id,subscriptions.plan_id,plan_name,start_date, price order by customer_id
+end;$$
+
+create  procedure payment(
+  customer_id INTEGER) language plpgsql    
+as $$  
+DECLARE @customer_id AS INTEGER
+SELECT customer_id, subscriptions.plan_id , plan_name, start_date AS payment_date, price AS amount 
+FROM foodie_fi.subscriptions
+JOIN  foodie_fi.plans 
+ON subscriptions.plan_id = plans.plan_id
+WHERE  subscriptions.plan_id != 0 AND extract(year from start_date) = '2020' 
+GROUP BY customer_id,subscriptions.plan_id,plan_name,start_date, price
+ORDER BY customer_id
+end;$$
+
+
+
+
+
+
+
+DROP TABLE IF EXISTS m2;
+CREATE TEMP TABLE m2 AS (
+select customer_id, subscriptions.plan_id , plan_name, start_date AS payment_date, price AS amount 
+from foodie_fi.subscriptions join foodie_fi.plans on subscriptions.plan_id = plans.plan_id
+where  subscriptions.plan_id != 0 AND extract(year from start_date) = '2020' 
+group by customer_id,subscriptions.plan_id,plan_name,start_date, price order by customer_id );
+
+        IF plan_id= 1 OR plan_id = 2 THEN 
+        
+        ;
+        ELSE IF plan_id =3 THEN 
+        payment_date = start_date
+        ;
+        EXIT WHEN  plan_id= 4 
+        
+        ;
+        
+    END LOOP;
+END;
+
+CREATE PROCEDURE  payment(customer_id INTEGER) language plpgsql    
+as
+DECLARE customer_id INT ;
+
+BEGIN 
+for customer_id in select customer_id from m2
+
+BEGIN 
+ SELECT 
+  BEGIN
+      LOOP
+         
+        IF plan_id= 1 OR plan_id = 2 THEN
+        
+        ;
+        ELSE IF plan_id =3 THEN 
+        
+        ;
+        EXIT WHEN  plan_id= 4 
+        
+        ;
+END;
