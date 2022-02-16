@@ -101,3 +101,15 @@ SELECT customer_id,txn_month, monthly_amount,
    ) AS cumulative
 FROM T1
 order by customer_id,txn_month;
+
+
+
+-- C. Data Allocation Challenge
+-- customer group 1: data is allocated based off the amount of money at the end of the previous month 
+
+
+ALTER TABLE data_bank.customer_transactions 
+ADD COLUMN net_amount int ;
+select* from data_bank.customer_transactions ;
+
+-- https://dba.stackexchange.com/questions/212927/postgresql-update-different-column-on-condition-using-case-statement/212928
