@@ -79,8 +79,8 @@ ORDER BY txn_month;
 
 
 4 -- What is the closing balance for each customer at the end of the month?
-   -- closing balance = txn amount of begining of the month + current txn amount
-   
+   -- closing balance = txn amount of begining of the month + current txn amount 
+   -- cumulative toplam içeren bi column oluşturmam gerek.
    
 CREATE TEMP TABLE T1 AS (select customer_id, EXTRACT (MONTH FROM txn_date ) AS txn_month ,SUM(txn_amount) AS monthly_amount
 from data_bank.customer_transactions
