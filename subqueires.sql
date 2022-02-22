@@ -1,4 +1,4 @@
-/* SELECT first_name, last_name 
+SELECT first_name, last_name 
 FROM employees.employees
 join employees.dept_manager on dept_manager.emp_no = employees.emp_no
 ;
@@ -11,7 +11,7 @@ WHERE
     e.emp_no IN (SELECT 
             dm.emp_no
         FROM
-            employees.dept_manager dm); */
+            employees.dept_manager dm); 
             
 /*Extract the information about all department managers who were hired between 
 the 1st of January 1990 and the 1st of January 1995. */
@@ -31,8 +31,8 @@ WHERE
             /* SUB QUERIES EXIST- NOT EXISTS nested inside WHERE */
 /* it returns a boolean value exists = true not =F
 Select the entire information for all employees whose job title is “Assistant Engineer”. 
-Hint: To solve this exercise, use the 'employees' table. */
-/* SELECT
+ */
+ SELECT
     *
 FROM
     employees.employees e
@@ -42,9 +42,9 @@ WHERE
         FROM
             employees.titles t
         WHERE
-title = 'Assistant Engineer'); */
+title = 'Assistant Engineer'); 
 
-/*SELECT 
+SELECT 
     *
 FROM
     employees.employees e
@@ -55,7 +55,7 @@ WHERE
             employees.titles t
         WHERE
             t.emp_no = e.emp_no
-                AND title = 'Assistant Engineer');*/
+                AND title = 'Assistant Engineer');
                 
                 /* SUB QUERIES NESTED IN SELECT FROM */
 /* 110022yi 10020nin manageri , 110039u da 10021-10040in manageri yap.*/
